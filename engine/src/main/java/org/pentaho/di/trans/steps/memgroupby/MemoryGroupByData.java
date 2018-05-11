@@ -29,13 +29,14 @@ import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.step.BaseStepData;
 import org.pentaho.di.trans.step.StepDataInterface;
+import org.pentaho.di.trans.steps.groupby.BaseGroupByData;
 
 /**
  * @author Matt
  * @since 24-jan-2005
  *
  */
-public class MemoryGroupByData extends BaseStepData implements StepDataInterface {
+public class MemoryGroupByData extends BaseGroupByData {
   public class HashEntry {
     private Object[] groupData;
 
@@ -76,32 +77,10 @@ public class MemoryGroupByData extends BaseStepData implements StepDataInterface
   }
 
   public HashMap<HashEntry, Aggregate> map;
-
-  public RowMetaInterface aggMeta;
-  public RowMetaInterface groupMeta;
   public RowMetaInterface entryMeta;
-
-  public RowMetaInterface groupAggMeta; // for speed: groupMeta+aggMeta
-  public int[] groupnrs;
-  public int[] subjectnrs;
-
-  public boolean firstRead;
-
-  public Object[] groupResult;
-
-  public boolean hasOutput;
-
-  public RowMetaInterface inputRowMeta;
-  public RowMetaInterface outputRowMeta;
-
-  public ValueMetaInterface valueMetaInteger;
-  public ValueMetaInterface valueMetaNumber;
-
-  public boolean newBatch;
 
   public MemoryGroupByData() {
     super();
-
   }
 
   public HashEntry getHashEntry( Object[] groupData ) {
@@ -112,6 +91,6 @@ public class MemoryGroupByData extends BaseStepData implements StepDataInterface
    * Method responsible for clearing out memory hogs
    */
   public void clear() {
-    map = new HashMap<MemoryGroupByData.HashEntry, Aggregate>();
+    map = new HashMap<>();
   }
 }

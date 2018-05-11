@@ -53,6 +53,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.trans.steps.groupby.BaseGroupByMeta;
 import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
@@ -62,7 +63,7 @@ import org.w3c.dom.Node;
  */
 
 @InjectionSupported( localizationPrefix = "MemoryGroupBy.Injection.", groups = { "FIELDS", "AGGREGATES" } )
-public class MemoryGroupByMeta extends BaseStepMeta implements StepMetaInterface {
+public class MemoryGroupByMeta extends BaseGroupByMeta {
   private static Class<?> PKG = MemoryGroupByMeta.class; // for i18n purposes, needed by Translator2!!
 
   public static final int TYPE_GROUP_NONE = 0;
@@ -122,213 +123,18 @@ public class MemoryGroupByMeta extends BaseStepMeta implements StepMetaInterface
     BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.COUNT_DISTINCT" ),
     BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.COUNT_ANY" ), };
 
-  @Injection( name = "GROUPFIELD", group = "FIELDS" )
-  /** Fields to group over */
-  private String[] groupField;
-
-  @Injection( name = "AGGREGATEFIELD", group = "AGGREGATES" )
-  /** Name of aggregate field */
-  private String[] aggregateField;
-
-  @Injection( name = "SUBJECTFIELD", group = "AGGREGATES" )
-  /** Field name to group over */
-  private String[] subjectField;
-
-  @Injection( name = "AGGREGATETYPE", group = "AGGREGATES" )
-  /** Type of aggregate */
-  private int[] aggregateType;
-
-  @Injection( name = "VALUEFIELD", group = "AGGREGATES" )
-  /** Value to use as separator for ex */
-  private String[] valueField;
-
-  @Injection( name = "ALWAYSGIVINGBACKONEROW", group = "FIELDS" )
-  /** Flag to indicate that we always give back one row. Defaults to true for existing transformations. */
-  private boolean alwaysGivingBackOneRow;
-
   public MemoryGroupByMeta() {
     super(); // allocate BaseStepMeta
   }
 
-  /**
-   * @return Returns the aggregateField.
-   */
-  public String[] getAggregateField() {
-    return aggregateField;
-  }
-
-  /**
-   * @param aggregateField
-   *          The aggregateField to set.
-   */
-  public void setAggregateField( String[] aggregateField ) {
-    this.aggregateField = aggregateField;
-  }
-
-  /**
-   * @return Returns the aggregateType.
-   */
-  public int[] getAggregateType() {
-    return aggregateType;
-  }
-
-  /**
-   * @param aggregateType
-   *          The aggregateType to set.
-   */
-  public void setAggregateType( int[] aggregateType ) {
-    this.aggregateType = aggregateType;
-  }
-
-  /**
-   * @return Returns the groupField.
-   */
-  public String[] getGroupField() {
-    return groupField;
-  }
-
-  /**
-   * @param groupField
-   *          The groupField to set.
-   */
-  public void setGroupField( String[] groupField ) {
-    this.groupField = groupField;
-  }
-
-  /**
-   * @return Returns the subjectField.
-   */
-  public String[] getSubjectField() {
-    return subjectField;
-  }
-
-  /**
-   * @param subjectField
-   *          The subjectField to set.
-   */
-  public void setSubjectField( String[] subjectField ) {
-    this.subjectField = subjectField;
-  }
-
-  /**
-   * @return Returns the valueField.
-   */
-  public String[] getValueField() {
-    return valueField;
-  }
-
-  /**
-   * @param valueField
-   *          The valueField to set.
-   */
-  public void setValueField( String[] valueField ) {
-    this.valueField = valueField;
-  }
-
   @Override
-  public void loadXML( Node stepnode, List<DatabaseMeta> databases, IMetaStore metaStore ) throws KettleXMLException {
-    readData( stepnode );
-  }
-
-  public void allocate( int sizegroup, int nrfields ) {
-    groupField = new String[sizegroup];
-    aggregateField = new String[nrfields];
-    subjectField = new String[nrfields];
-    aggregateType = new int[nrfields];
-    valueField = new String[nrfields];
-  }
-
-  @Override
-  public Object clone() {
-    MemoryGroupByMeta retval = (MemoryGroupByMeta) super.clone();
-    int nrFields = aggregateField.length;
-    int nrGroups = groupField.length;
-
-    retval.allocate( nrGroups, nrFields );
-    System.arraycopy( groupField, 0, retval.groupField, 0, nrGroups );
-    System.arraycopy( aggregateField, 0, retval.aggregateField, 0, nrFields );
-    System.arraycopy( subjectField, 0, retval.subjectField, 0, nrFields );
-    System.arraycopy( aggregateType, 0, retval.aggregateType, 0, nrFields );
-    System.arraycopy( valueField, 0, retval.valueField, 0, nrFields );
-    return retval;
-  }
-
-  private void readData( Node stepnode ) throws KettleXMLException {
+  protected void readData( Node stepnode ) throws KettleXMLException {
     try {
-      Node groupn = XMLHandler.getSubNode( stepnode, "group" );
-      Node fields = XMLHandler.getSubNode( stepnode, "fields" );
-
-      int sizegroup = XMLHandler.countNodes( groupn, "field" );
-      int nrfields = XMLHandler.countNodes( fields, "field" );
-
-      allocate( sizegroup, nrfields );
-
-      for ( int i = 0; i < sizegroup; i++ ) {
-        Node fnode = XMLHandler.getSubNodeByNr( groupn, "field", i );
-        groupField[i] = XMLHandler.getTagValue( fnode, "name" );
-      }
-
-      boolean hasNumberOfValues = false;
-      for ( int i = 0; i < nrfields; i++ ) {
-        Node fnode = XMLHandler.getSubNodeByNr( fields, "field", i );
-        aggregateField[i] = XMLHandler.getTagValue( fnode, "aggregate" );
-        subjectField[i] = XMLHandler.getTagValue( fnode, "subject" );
-        aggregateType[i] = getType( XMLHandler.getTagValue( fnode, "type" ) );
-
-        if ( aggregateType[i] == TYPE_GROUP_COUNT_ALL
-          || aggregateType[i] == TYPE_GROUP_COUNT_DISTINCT || aggregateType[i] == TYPE_GROUP_COUNT_ANY ) {
-          hasNumberOfValues = true;
-        }
-
-        valueField[i] = XMLHandler.getTagValue( fnode, "valuefield" );
-      }
-
-      String giveBackRow = XMLHandler.getTagValue( stepnode, "give_back_row" );
-      if ( Utils.isEmpty( giveBackRow ) ) {
-        alwaysGivingBackOneRow = hasNumberOfValues;
-      } else {
-        alwaysGivingBackOneRow = "Y".equalsIgnoreCase( giveBackRow );
-      }
+      super.readData( stepnode );
     } catch ( Exception e ) {
       throw new KettleXMLException( BaseMessages.getString(
         PKG, "MemoryGroupByMeta.Exception.UnableToLoadStepInfoFromXML" ), e );
     }
-  }
-
-  public static final int getType( String desc ) {
-    for ( int i = 0; i < typeGroupCode.length; i++ ) {
-      if ( typeGroupCode[i].equalsIgnoreCase( desc ) ) {
-        return i;
-      }
-    }
-    for ( int i = 0; i < typeGroupLongDesc.length; i++ ) {
-      if ( typeGroupLongDesc[i].equalsIgnoreCase( desc ) ) {
-        return i;
-      }
-    }
-    return 0;
-  }
-
-  public static final String getTypeDesc( int i ) {
-    if ( i < 0 || i >= typeGroupCode.length ) {
-      return null;
-    }
-    return typeGroupCode[i];
-  }
-
-  public static final String getTypeDescLong( int i ) {
-    if ( i < 0 || i >= typeGroupLongDesc.length ) {
-      return null;
-    }
-    return typeGroupLongDesc[i];
-  }
-
-  @Override
-  public void setDefault() {
-    int sizegroup = 0;
-    int nrfields = 0;
-
-    allocate( sizegroup, nrfields );
   }
 
   @Override
@@ -471,29 +277,7 @@ public class MemoryGroupByMeta extends BaseStepMeta implements StepMetaInterface
   @Override
   public void readRep( Repository rep, IMetaStore metaStore, ObjectId id_step, List<DatabaseMeta> databases ) throws KettleException {
     try {
-      int groupsize = rep.countNrStepAttributes( id_step, "group_name" );
-      int nrvalues = rep.countNrStepAttributes( id_step, "aggregate_name" );
-
-      allocate( groupsize, nrvalues );
-
-      for ( int i = 0; i < groupsize; i++ ) {
-        groupField[i] = rep.getStepAttributeString( id_step, i, "group_name" );
-      }
-
-      boolean hasNumberOfValues = false;
-      for ( int i = 0; i < nrvalues; i++ ) {
-        aggregateField[i] = rep.getStepAttributeString( id_step, i, "aggregate_name" );
-        subjectField[i] = rep.getStepAttributeString( id_step, i, "aggregate_subject" );
-        aggregateType[i] = getType( rep.getStepAttributeString( id_step, i, "aggregate_type" ) );
-
-        if ( aggregateType[i] == TYPE_GROUP_COUNT_ALL
-          || aggregateType[i] == TYPE_GROUP_COUNT_DISTINCT || aggregateType[i] == TYPE_GROUP_COUNT_ANY ) {
-          hasNumberOfValues = true;
-        }
-        valueField[i] = rep.getStepAttributeString( id_step, i, "aggregate_value_field" );
-      }
-
-      alwaysGivingBackOneRow = rep.getStepAttributeBoolean( id_step, 0, "give_back_row", hasNumberOfValues );
+      super.readRep( rep, metaStore, id_step, databases );
     } catch ( Exception e ) {
       throw new KettleException( BaseMessages.getString(
         PKG, "MemoryGroupByMeta.Exception.UnexpectedErrorInReadingStepInfoFromRepository" ), e );
@@ -523,25 +307,6 @@ public class MemoryGroupByMeta extends BaseStepMeta implements StepMetaInterface
   }
 
   @Override
-  public void check( List<CheckResultInterface> remarks, TransMeta transMeta, StepMeta stepMeta,
-    RowMetaInterface prev, String[] input, String[] output, RowMetaInterface info, VariableSpace space,
-    Repository repository, IMetaStore metaStore ) {
-    CheckResult cr;
-
-    if ( input.length > 0 ) {
-      cr =
-        new CheckResult( CheckResultInterface.TYPE_RESULT_OK, BaseMessages.getString(
-          PKG, "MemoryGroupByMeta.CheckResult.ReceivingInfoOK" ), stepMeta );
-      remarks.add( cr );
-    } else {
-      cr =
-        new CheckResult( CheckResultInterface.TYPE_RESULT_ERROR, BaseMessages.getString(
-          PKG, "MemoryGroupByMeta.CheckResult.NoInputError" ), stepMeta );
-      remarks.add( cr );
-    }
-  }
-
-  @Override
   public StepInterface getStep( StepMeta stepMeta, StepDataInterface stepDataInterface, int cnr,
     TransMeta transMeta, Trans trans ) {
     return new MemoryGroupBy( stepMeta, stepDataInterface, cnr, transMeta, trans );
@@ -550,21 +315,6 @@ public class MemoryGroupByMeta extends BaseStepMeta implements StepMetaInterface
   @Override
   public StepDataInterface getStepData() {
     return new MemoryGroupByData();
-  }
-
-  /**
-   * @return the alwaysGivingBackOneRow
-   */
-  public boolean isAlwaysGivingBackOneRow() {
-    return alwaysGivingBackOneRow;
-  }
-
-  /**
-   * @param alwaysGivingBackOneRow
-   *          the alwaysGivingBackOneRow to set
-   */
-  public void setAlwaysGivingBackOneRow( boolean alwaysGivingBackOneRow ) {
-    this.alwaysGivingBackOneRow = alwaysGivingBackOneRow;
   }
 
   /**

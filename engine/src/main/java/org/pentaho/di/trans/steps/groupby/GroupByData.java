@@ -41,23 +41,10 @@ import org.pentaho.di.trans.step.StepDataInterface;
  * @since 24-jan-2005
  *
  */
-public class GroupByData extends BaseStepData implements StepDataInterface {
+public class GroupByData extends BaseGroupByData implements StepDataInterface {
   public Object[] previous;
 
-  /**
-   * target value meta for aggregation fields
-   */
-  public RowMetaInterface aggMeta;
   public Object[] agg;
-  public RowMetaInterface groupMeta;
-  public RowMetaInterface groupAggMeta; // for speed: groupMeta+aggMeta
-  public int[] groupnrs;
-  /**
-   * array, length is equal to aggMeta value
-   * meta list size and metadata subject fields length. Values corresponds to input
-   * values used to calculate target results.
-   */
-  public int[] subjectnrs;
   public long[] counts;
 
   public Set<Object>[] distinctObjs;
@@ -79,11 +66,6 @@ public class GroupByData extends BaseStepData implements StepDataInterface {
 
   public Object[] groupResult;
 
-  public boolean hasOutput;
-
-  public RowMetaInterface inputRowMeta;
-  public RowMetaInterface outputRowMeta;
-
   public List<Integer> cumulativeSumSourceIndexes;
   public List<Integer> cumulativeSumTargetIndexes;
 
@@ -91,13 +73,9 @@ public class GroupByData extends BaseStepData implements StepDataInterface {
   public List<Integer> cumulativeAvgTargetIndexes;
 
   public Object[] previousSums;
-
   public Object[] previousAvgSum;
 
   public long[] previousAvgCount;
-
-  public ValueMetaInterface valueMetaInteger;
-  public ValueMetaInterface valueMetaNumber;
 
   public double[] mean;
 
@@ -108,5 +86,4 @@ public class GroupByData extends BaseStepData implements StepDataInterface {
 
     previous = null;
   }
-
 }
