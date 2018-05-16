@@ -35,7 +35,6 @@ import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.value.ValueMetaFactory;
-import org.pentaho.di.core.row.value.ValueMetaInteger;
 import org.pentaho.di.core.row.value.ValueMetaNone;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -55,56 +54,7 @@ import java.util.List;
 abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaInterface {
   private static Class<?> PKG = BaseGroupByMeta.class; // for i18n purposes, needed by Translator2!!
 
-  public static final int TYPE_GROUP_NONE = 0;
-  public static final int TYPE_GROUP_SUM = 1;
-  public static final int TYPE_GROUP_AVERAGE = 2;
-  public static final int TYPE_GROUP_MEDIAN = 3;
-  public static final int TYPE_GROUP_PERCENTILE = 4;
-  public static final int TYPE_GROUP_MIN = 5;
-  public static final int TYPE_GROUP_MAX = 6;
-  public static final int TYPE_GROUP_COUNT_ALL = 7;
-  public static final int TYPE_GROUP_CONCAT_COMMA = 8;
-  public static final int TYPE_GROUP_FIRST = 9;
-  public static final int TYPE_GROUP_LAST = 10;
-  public static final int TYPE_GROUP_FIRST_INCL_NULL = 11;
-  public static final int TYPE_GROUP_LAST_INCL_NULL = 12;
-  public static final int TYPE_GROUP_CUMULATIVE_SUM = 13;
-  public static final int TYPE_GROUP_CUMULATIVE_AVERAGE = 14;
-  public static final int TYPE_GROUP_STANDARD_DEVIATION = 15;
-  public static final int TYPE_GROUP_CONCAT_STRING = 16;
-  public static final int TYPE_GROUP_COUNT_DISTINCT = 17;
-  public static final int TYPE_GROUP_COUNT_ANY = 18;
-  public static final int TYPE_GROUP_STANDARD_DEVIATION_SAMPLE = 19;
-  public static final int TYPE_GROUP_PERCENTILE_NEAREST_RANK = 20;
-
-  public static final String[] typeGroupCode = /* WARNING: DO NOT TRANSLATE THIS. WE ARE SERIOUS, DON'T TRANSLATE! */
-      {
-          "-", "SUM", "AVERAGE", "MEDIAN", "PERCENTILE", "MIN", "MAX", "COUNT_ALL", "CONCAT_COMMA", "FIRST", "LAST",
-          "FIRST_INCL_NULL", "LAST_INCL_NULL", "CUM_SUM", "CUM_AVG", "STD_DEV", "CONCAT_STRING", "COUNT_DISTINCT",
-          "COUNT_ANY", "STD_DEV_SAMPLE", "PERCENTILE_NEAREST_RANK" };
-
-  public static final String[] typeGroupLongDesc = {
-      "-", BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.SUM" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.AVERAGE" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.MEDIAN" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.PERCENTILE" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.MIN" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.MAX" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.CONCAT_ALL" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.CONCAT_COMMA" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.FIRST" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.LAST" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.FIRST_INCL_NULL" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.LAST_INCL_NULL" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.CUMUMALTIVE_SUM" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.CUMUMALTIVE_AVERAGE" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.STANDARD_DEVIATION" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.CONCAT_STRING" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.COUNT_DISTINCT" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.COUNT_ANY" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.STANDARD_DEVIATION_SAMPLE" ),
-      BaseMessages.getString( PKG, "GroupByMeta.TypeGroupLongDesc.PERCENTILE_NEAREST_RANK" )
-  };
+  protected GroupByType[] aggregateFunctions;
 
   /**
    * Fields to group over
@@ -128,7 +78,8 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
    * Type of aggregate
    */
   @Injection( name="AGGREGATETYPE", group = "AGGREGATES" )
-  protected int[] aggregateType;
+  // TODO: look into making this just GroupByTypes
+  protected String[] aggregateType;
 
   /**
    * Value to use as separator for ex
@@ -163,7 +114,7 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
   /**
    * @return Returns the aggregateType.
    */
-  public int[] getAggregateType() {
+  public String[] getAggregateType() {
     return aggregateType;
   }
 
@@ -225,7 +176,7 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
     groupField = new String[ sizegroup ];
     aggregateField = new String[ nrfields ];
     subjectField = new String[ nrfields ];
-    aggregateType = new int[ nrfields ];
+    aggregateType = new String[ nrfields ];
     valueField = new String[ nrfields ];
   }
 
@@ -253,36 +204,55 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
     return retval;
   }
 
-  public static final int getType( String desc ) {
-    for ( int i = 0; i < typeGroupCode.length; i++ ) {
-      if ( typeGroupCode[ i ].equalsIgnoreCase( desc ) ) {
-        return i;
-      }
-    }
+  protected void readData( Node stepnode ) throws KettleXMLException {
+    try {
+      Node groupn = XMLHandler.getSubNode( stepnode, "group" );
+      Node fields = XMLHandler.getSubNode( stepnode, "fields" );
 
-    for ( int i = 0; i < typeGroupLongDesc.length; i++ ) {
-      if ( typeGroupLongDesc[ i ].equalsIgnoreCase( desc ) ) {
-        return i;
-      }
-    }
+      int sizegroup = XMLHandler.countNodes( groupn, "field" );
+      int nrfields = XMLHandler.countNodes( fields, "field" );
 
-    return 0;
+      allocate( sizegroup, nrfields );
+
+      for ( int i = 0; i < sizegroup; i++ ) {
+        Node fnode = XMLHandler.getSubNodeByNr( groupn, "field", i );
+        groupField[ i ] = XMLHandler.getTagValue( fnode, "name" );
+      }
+
+      boolean hasNumberOfValues = false;
+      for ( int i = 0; i < nrfields; i++ ) {
+        Node fnode = XMLHandler.getSubNodeByNr( fields, "field", i );
+        aggregateField[ i ] = XMLHandler.getTagValue( fnode, "aggregate" );
+        subjectField[ i ] = XMLHandler.getTagValue( fnode, "subject" );
+        aggregateType[ i ] = XMLHandler.getTagValue( fnode, "type" );
+
+        if ( aggregateType[ i ].equals( GroupByType.COUNT_ALL.getTypeGroupCode() )
+            || aggregateType[ i ].equals( GroupByType.COUNT_DISTINCT.getTypeGroupCode() )
+            || aggregateType[ i ].equals( GroupByType.COUNT_ANY.getTypeGroupCode() ) ) {
+          hasNumberOfValues = true;
+        }
+
+        valueField[ i ] = XMLHandler.getTagValue( fnode, "valuefield" );
+      }
+
+      String giveBackRow = XMLHandler.getTagValue( stepnode, "give_back_row" );
+      if ( Utils.isEmpty( giveBackRow ) ) {
+        alwaysGivingBackOneRow = hasNumberOfValues;
+      } else {
+        alwaysGivingBackOneRow = "Y".equalsIgnoreCase( giveBackRow );
+      }
+    } catch ( Exception e ) {
+      throw new KettleXMLException( BaseMessages.getString(
+          PKG, "GroupByMeta.Exception.UnableToLoadStepInfoFromXML" ), e );
+    }
   }
 
-  public static final String getTypeDesc( int i ) {
-    if ( i < 0 || i >= typeGroupCode.length ) {
+  public final String getTypeDescLong( int i ) {
+    if ( i < 0 || i >= aggregateFunctions.length ) {
       return null;
     }
 
-    return typeGroupCode[ i ];
-  }
-
-  public static final String getTypeDescLong( int i ) {
-    if ( i < 0 || i >= typeGroupLongDesc.length ) {
-      return null;
-    }
-
-    return typeGroupLongDesc[ i ];
+    return aggregateFunctions[ i ].getLongDesc();
   }
 
   @Override
@@ -291,6 +261,210 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
     int numberOfFields = 0;
 
     allocate( sizeGroup, numberOfFields );
+  }
+
+  @Override
+  public void getFields( RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
+                         VariableSpace space, Repository repository, IMetaStore metaStore ) {
+    getFields( rowMeta, origin, info, nextStep, space, repository, metaStore, false );
+  }
+
+  protected void getFields( RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
+                            VariableSpace space, Repository repository, IMetaStore metaStore, boolean passAllRows ) {
+    // re-assemble a new row of metadata
+    //
+    RowMetaInterface fields = new RowMeta();
+
+    if ( !passAllRows ) {
+      // Add the grouping fields in the correct order...
+      //
+      for ( int i = 0; i < groupField.length; i++ ) {
+        ValueMetaInterface valueMeta = rowMeta.searchValueMeta( groupField[ i ] );
+        if ( valueMeta != null ) {
+          fields.addValueMeta( valueMeta );
+        }
+      }
+    } else {
+      // Add all the original fields from the incoming row meta
+      //
+      fields.addRowMeta( rowMeta );
+    }
+
+    // Re-add aggregates
+    //
+    for ( int i = 0; i < subjectField.length; i++ ) {
+      ValueMetaInterface subj = rowMeta.searchValueMeta( subjectField[ i ] );
+      if ( subj != null || aggregateType[ i ].equals( GroupByType.COUNT_ANY.getTypeGroupCode() ) ) {
+        String valueName = aggregateField[ i ];
+        int valueType = ValueMetaInterface.TYPE_NONE;
+        int length = -1;
+        int precision = -1;
+
+        GroupByType aggType = GroupByType.getTypeFromString( aggregateType[ i ] );
+        switch ( aggType ) {
+          case SUM:
+          case AVERAGE:
+          case CUMULATIVE_SUM:
+          case CUMULATIVE_AVERAGE:
+          case FIRST:
+          case LAST:
+          case FIRST_INCL_NULL:
+          case LAST_INCL_NULL:
+          case MIN:
+          case MAX:
+            valueType = subj.getType();
+            break;
+          case COUNT_DISTINCT:
+          case COUNT_ANY:
+          case COUNT_ALL:
+            valueType = ValueMetaInterface.TYPE_INTEGER;
+            break;
+          case CONCAT_COMMA:
+            valueType = ValueMetaInterface.TYPE_STRING;
+            break;
+          case STANDARD_DEVIATION:
+          case MEDIAN:
+          case PERCENTILE:
+          case STANDARD_DEVIATION_SAMPLE:
+            valueType = ValueMetaInterface.TYPE_NUMBER;
+            break;
+          case CONCAT_STRING:
+            valueType = ValueMetaInterface.TYPE_STRING;
+            break;
+          default:
+            break;
+        }
+
+        // Change type from integer to number in case off averages for cumulative average
+        //
+        if ( aggregateType[ i ] == GroupByType.CUMULATIVE_AVERAGE.getTypeGroupCode()
+            && valueType == ValueMetaInterface.TYPE_INTEGER ) {
+          valueType = ValueMetaInterface.TYPE_NUMBER;
+          precision = -1;
+          length = -1;
+        } else if ( aggregateType[ i ] == GroupByType.COUNT_ALL.getTypeGroupCode()
+            || aggregateType[ i ] == GroupByType.COUNT_DISTINCT.getTypeGroupCode()
+            || aggregateType[ i ] == GroupByType.COUNT_ANY.getTypeGroupCode() ) {
+          length = ValueMetaInterface.DEFAULT_INTEGER_LENGTH;
+          precision = 0;
+        } else if ( aggregateType[ i ] == GroupByType.SUM.getTypeGroupCode()
+            && valueType != ValueMetaInterface.TYPE_INTEGER && valueType != ValueMetaInterface.TYPE_NUMBER
+            && valueType != ValueMetaInterface.TYPE_BIGNUMBER ) {
+          // If it ain't numeric, we change it to Number
+          //
+          valueType = ValueMetaInterface.TYPE_NUMBER;
+          precision = -1;
+          length = -1;
+        }
+
+        if ( valueType != ValueMetaInterface.TYPE_NONE ) {
+          ValueMetaInterface v;
+          try {
+            v = ValueMetaFactory.createValueMeta( valueName, valueType );
+          } catch ( KettlePluginException e ) {
+            v = new ValueMetaNone( valueName );
+          }
+          v.setOrigin( origin );
+          v.setLength( length, precision );
+
+          if ( subj != null ) {
+            v.setConversionMask( subj.getConversionMask() );
+          }
+
+          fields.addValueMeta( v );
+        }
+      }
+    }
+
+    // Now that we have all the fields we want, we should clear the original row and replace the values...
+    //
+    rowMeta.clear();
+    rowMeta.addRowMeta( fields );
+  }
+
+  @Override
+  public String getXML() {
+    StringBuilder retval = new StringBuilder( 500 );
+
+    retval.append( "      " ).append( XMLHandler.addTagValue( "give_back_row", alwaysGivingBackOneRow ) );
+
+    retval.append( "      <group>" ).append( Const.CR );
+    for ( int i = 0; i < groupField.length; i++ ) {
+      retval.append( "        <field>" ).append( Const.CR );
+      retval.append( "          " ).append( XMLHandler.addTagValue( "name", groupField[i] ) );
+      retval.append( "        </field>" ).append( Const.CR );
+    }
+    retval.append( "      </group>" ).append( Const.CR );
+
+    retval.append( "      <fields>" ).append( Const.CR );
+    for ( int i = 0; i < subjectField.length; i++ ) {
+      retval.append( "        <field>" ).append( Const.CR );
+      retval.append( "          " ).append( XMLHandler.addTagValue( "aggregate", aggregateField[i] ) );
+      retval.append( "          " ).append( XMLHandler.addTagValue( "subject", subjectField[i] ) );
+      retval.append( "          " ).append( XMLHandler.addTagValue( "type", aggregateType[i] ) );
+      retval.append( "          " ).append( XMLHandler.addTagValue( "valuefield", valueField[i] ) );
+      retval.append( "        </field>" ).append( Const.CR );
+    }
+    retval.append( "      </fields>" ).append( Const.CR );
+
+    return retval.toString();
+  }
+
+  @Override
+  public void readRep( Repository rep, IMetaStore metaStore, ObjectId id_step, List<DatabaseMeta> databases )
+      throws KettleException {
+    try {
+      int groupsize = rep.countNrStepAttributes( id_step, "group_name" );
+      int nrvalues = rep.countNrStepAttributes( id_step, "aggregate_name" );
+
+      allocate( groupsize, nrvalues );
+
+      for ( int i = 0; i < groupsize; i++ ) {
+        groupField[ i ] = rep.getStepAttributeString( id_step, i, "group_name" );
+      }
+
+      boolean hasNumberOfValues = false;
+      for ( int i = 0; i < nrvalues; i++ ) {
+        aggregateField[ i ] = rep.getStepAttributeString( id_step, i, "aggregate_name" );
+        subjectField[ i ] = rep.getStepAttributeString( id_step, i, "aggregate_subject" );
+        aggregateType[ i ] = rep.getStepAttributeString( id_step, i, "aggregate_type" );
+
+        if ( aggregateType[ i ] == GroupByType.COUNT_ALL.getTypeGroupCode()
+            || aggregateType[ i ] == GroupByType.COUNT_DISTINCT.getTypeGroupCode()
+            || aggregateType[ i ] == GroupByType.COUNT_ANY.getTypeGroupCode() ) {
+          hasNumberOfValues = true;
+        }
+        valueField[ i ] = rep.getStepAttributeString( id_step, i, "aggregate_value_field" );
+      }
+
+      alwaysGivingBackOneRow = rep.getStepAttributeBoolean( id_step, 0, "give_back_row", hasNumberOfValues );
+    } catch ( Exception e ) {
+      throw new KettleException( BaseMessages.getString(
+          PKG, "BaseGroupByMeta.Exception.UnexpectedErrorInReadingStepInfoFromRepository" ), e );
+    }
+  }
+
+  @Override
+  public void saveRep( Repository rep, IMetaStore metaStore, ObjectId id_transformation, ObjectId id_step )
+      throws KettleException {
+    try {
+      rep.saveStepAttribute( id_transformation, id_step, "give_back_row", alwaysGivingBackOneRow );
+
+      for ( int i = 0; i < groupField.length; i++ ) {
+        rep.saveStepAttribute( id_transformation, id_step, i, "group_name", groupField[i] );
+      }
+
+      for ( int i = 0; i < subjectField.length; i++ ) {
+        rep.saveStepAttribute( id_transformation, id_step, i, "aggregate_name", aggregateField[i] );
+        rep.saveStepAttribute( id_transformation, id_step, i, "aggregate_subject", subjectField[i] );
+        rep.saveStepAttribute( id_transformation, id_step, i, "aggregate_type", aggregateType[i] );
+        rep.saveStepAttribute( id_transformation, id_step, i, "aggregate_value_field", valueField[i] );
+      }
+    } catch ( Exception e ) {
+      throw new KettleException( BaseMessages.getString(
+          PKG, "MemoryGroupByMeta.Exception.UnableToSaveStepInfoToRepository" )
+          + id_step, e );
+    }
   }
 
   @Override

@@ -439,7 +439,7 @@ public class MemoryGroupByDialog extends BaseStepDialog implements StepDialogInt
       TableItem item = wAgg.getNonEmpty( i );
       input.getAggregateField()[i] = item.getText( 1 );
       input.getSubjectField()[i] = item.getText( 2 );
-      input.getAggregateType()[i] = MemoryGroupByMeta.getType( item.getText( 3 ) );
+      input.getAggregateType()[i] = item.getText( 3 );
       input.getValueField()[i] = item.getText( 4 );
     }
 

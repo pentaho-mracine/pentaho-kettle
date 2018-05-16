@@ -45,11 +45,10 @@ import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.trans.step.BaseStep;
 import org.pentaho.di.trans.step.StepDataInterface;
-import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.trans.steps.groupby.BaseGroupBy;
 import org.pentaho.di.trans.steps.memgroupby.MemoryGroupByData.HashEntry;
 
 /**
@@ -58,15 +57,13 @@ import org.pentaho.di.trans.steps.memgroupby.MemoryGroupByData.HashEntry;
  * @author Matt
  * @since 2-jun-2003
  */
-public class MemoryGroupBy extends BaseStep implements StepInterface {
+public class MemoryGroupBy extends BaseGroupBy {
   private static Class<?> PKG = MemoryGroupByMeta.class; // for i18n purposes, needed by Translator2!!
 
   private MemoryGroupByMeta meta;
 
   private MemoryGroupByData data;
 
-  private boolean allNullsAreZero = false;
-  private boolean minNullIsValued = false;
   private boolean compatibilityMode = false;
 
   public MemoryGroupBy( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
@@ -79,6 +76,12 @@ public class MemoryGroupBy extends BaseStep implements StepInterface {
 
   @Override
   public boolean processRow( StepMetaInterface smi, StepDataInterface sdi ) throws KettleException {
+    compatibilityMode = ValueMetaBase.convertStringToBoolean(
+        getVariable( Const.KETTLE_COMPATIBILITY_MEMORY_GROUP_BY_SUM_AVERAGE_RETURN_NUMBER_TYPE, "N" ) );
+    return processRow( smi, sdi, compatibilityMode );
+  }
+
+  public boolean processRow( StepMetaInterface smi, StepDataInterface sdi, boolean compatibilityMode ) throws KettleException {
     meta = (MemoryGroupByMeta) smi;
     data = (MemoryGroupByData) sdi;
 
@@ -94,8 +97,6 @@ public class MemoryGroupBy extends BaseStep implements StepInterface {
       allNullsAreZero = ValueMetaBase.convertStringToBoolean( val );
       val = getVariable( Const.KETTLE_AGGREGATION_MIN_NULL_IS_VALUED, "N" );
       minNullIsValued = ValueMetaBase.convertStringToBoolean( val );
-      compatibilityMode = ValueMetaBase.convertStringToBoolean(
-        getVariable( Const.KETTLE_COMPATIBILITY_MEMORY_GROUP_BY_SUM_AVERAGE_RETURN_NUMBER_TYPE, "N" ) );
 
       // What is the output looking like?
       //
@@ -196,7 +197,8 @@ public class MemoryGroupBy extends BaseStep implements StepInterface {
     return true;
   }
 
-  private void handleLastOfGroup() throws KettleException {
+  @Override
+  protected void handleLastOfGroup() throws KettleException {
     // Dump the content of the map...
     //
     for ( HashEntry entry : data.map.keySet() ) {
@@ -474,19 +476,10 @@ public class MemoryGroupBy extends BaseStep implements StepInterface {
     }
   }
 
-  private void initGroupMeta( RowMetaInterface previousRowMeta ) throws KettleValueException {
-    data.groupMeta = new RowMeta();
+  @Override
+  protected void initGroupMeta( RowMetaInterface previousRowMeta ) throws KettleValueException {
     data.entryMeta = new RowMeta();
-
-    for ( int i = 0; i < data.groupnrs.length; i++ ) {
-      ValueMetaInterface valueMeta = previousRowMeta.getValueMeta( data.groupnrs[i] );
-      data.groupMeta.addValueMeta( valueMeta );
-
-      ValueMetaInterface normalMeta = valueMeta.clone();
-      normalMeta.setStorageType( ValueMetaInterface.STORAGE_TYPE_NORMAL );
-    }
-
-    return;
+    super.initGroupMeta( previousRowMeta );
   }
 
   /**
@@ -578,32 +571,7 @@ public class MemoryGroupBy extends BaseStep implements StepInterface {
 
   @Override
   public void batchComplete() throws KettleException {
-    // Empty the hash table
-    //
-    handleLastOfGroup();
-
-    // Clear the complete cache...
-    //
+    super.batchComplete();
     data.map.clear();
-
-    data.newBatch = true;
-  }
-
-  /**
-   * Used for junits in MemoryGroupByAggregationNullsTest
-   *
-   * @param allNullsAreZero the allNullsAreZero to set
-   */
-  void setAllNullsAreZero( boolean allNullsAreZero ) {
-    this.allNullsAreZero = allNullsAreZero;
-  }
-
-  /**
-   * Used for junits in MemoryGroupByAggregationNullsTest
-   *
-   * @param minNullIsValued the minNullIsValued to set
-   */
-  void setMinNullIsValued( boolean minNullIsValued ) {
-    this.minNullIsValued = minNullIsValued;
   }
 }

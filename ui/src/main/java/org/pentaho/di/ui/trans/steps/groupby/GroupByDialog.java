@@ -629,7 +629,7 @@ public class GroupByDialog extends BaseStepDialog implements StepDialogInterface
       TableItem item = wAgg.getNonEmpty( i );
       input.getAggregateField()[i] = item.getText( 1 );
       input.getSubjectField()[i] = item.getText( 2 );
-      input.getAggregateType()[i] = GroupByMeta.getType( item.getText( 3 ) );
+      input.getAggregateType()[i] = item.getText( 3 );
       input.getValueField()[i] = item.getText( 4 );
     }
 

@@ -193,7 +193,7 @@ public class GroupByMetaInjection implements StepMetaInjectionInterface {
 
               String aggFieldname = null;
               String aggSubject = null;
-              int aggType = -1;
+              String aggType = null;
               String aggValue = null;
 
               List<StepInjectionMetaEntry> entries = lookField.getDetails();
@@ -209,7 +209,7 @@ public class GroupByMetaInjection implements StepMetaInjectionInterface {
                       aggSubject = value;
                       break;
                     case AGG_TYPE:
-                      aggType = GroupByMeta.getType( value );
+                      aggType = value;
                       break;
                     case AGG_VALUE:
                       aggValue = value;

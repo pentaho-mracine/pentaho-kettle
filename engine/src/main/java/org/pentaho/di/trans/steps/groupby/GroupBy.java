@@ -70,15 +70,11 @@ import org.pentaho.di.trans.step.StepMetaInterface;
  * @author Matt
  * @since 2-jun-2003
  */
-public class GroupBy extends BaseStep implements StepInterface {
+public class GroupBy extends BaseGroupBy {
   private static Class<?> PKG = GroupByMeta.class; // for i18n purposes, needed by Translator2!!
 
   private GroupByMeta meta;
-
   private GroupByData data;
-
-  private boolean allNullsAreZero = false;
-  private boolean minNullIsValued = false;
 
   public GroupBy( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
       Trans trans ) {
@@ -90,12 +86,21 @@ public class GroupBy extends BaseStep implements StepInterface {
 
   @Override
   public boolean processRow( StepMetaInterface smi, StepDataInterface sdi ) throws KettleException {
+    return processRow( smi, sdi, false );
+  }
+
+  public boolean processRow( StepMetaInterface smi, StepDataInterface sdi, boolean compatibilityMode ) throws KettleException {
     meta = (GroupByMeta) smi;
     data = (GroupByData) sdi;
 
     Object[] r = getRow(); // get row!
 
     if ( first ) {
+      if ( ( r == null ) && ( !meta.isAlwaysGivingBackOneRow() ) ) {
+        setOutputDone();
+        return false;
+      }
+
       String val = getVariable( Const.KETTLE_AGGREGATION_ALL_NULLS_ARE_ZERO, "N" );
       allNullsAreZero = ValueMetaBase.convertStringToBoolean( val );
       val = getVariable( Const.KETTLE_AGGREGATION_MIN_NULL_IS_VALUED, "N" );
@@ -272,7 +277,8 @@ public class GroupBy extends BaseStep implements StepInterface {
     return true;
   }
 
-  private void handleLastOfGroup() throws KettleException {
+  @Override
+  protected void handleLastOfGroup() throws KettleException {
     if ( meta.passAllRows() ) {
       // ALL ROWS
 
@@ -679,13 +685,6 @@ public class GroupBy extends BaseStep implements StepInterface {
     return result;
   }
 
-  private void initGroupMeta( RowMetaInterface previousRowMeta ) throws KettleValueException {
-    data.groupMeta = new RowMeta();
-    for ( int i = 0; i < data.groupnrs.length; i++ ) {
-      data.groupMeta.addValueMeta( previousRowMeta.getValueMeta( data.groupnrs[ i ] ) );
-    }
-  }
-
   /**
    * Used for junits in GroupByAggregationNullsTest
    *
@@ -893,9 +892,7 @@ public class GroupBy extends BaseStep implements StepInterface {
 
     if ( super.init( smi, sdi ) ) {
       data.bufferList = new ArrayList<>();
-
       data.rowsOnFile = 0;
-
       return true;
     }
     return false;
@@ -920,30 +917,6 @@ public class GroupBy extends BaseStep implements StepInterface {
     }
 
     super.dispose( smi, sdi );
-  }
-
-  @Override
-  public void batchComplete() throws KettleException {
-    handleLastOfGroup();
-    data.newBatch = true;
-  }
-
-  /**
-   * Used for junits in GroupByAggregationNullsTest
-   *
-   * @param allNullsAreZero the allNullsAreZero to set
-   */
-  void setAllNullsAreZero( boolean allNullsAreZero ) {
-    this.allNullsAreZero = allNullsAreZero;
-  }
-
-  /**
-   * Used for junits in GroupByAggregationNullsTest
-   *
-   * @param minNullIsValued the minNullIsValued to set
-   */
-  void setMinNullIsValued( boolean minNullIsValued ) {
-    this.minNullIsValued = minNullIsValued;
   }
 
   public GroupByMeta getMeta() {

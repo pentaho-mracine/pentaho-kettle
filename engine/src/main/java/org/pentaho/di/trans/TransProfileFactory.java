@@ -34,6 +34,7 @@ import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.dummytrans.DummyTransMeta;
 import org.pentaho.di.trans.steps.groupby.GroupByMeta;
+import org.pentaho.di.trans.steps.groupby.GroupByType;
 import org.pentaho.di.trans.steps.tableinput.TableInputMeta;
 
 /**
@@ -95,20 +96,22 @@ public class TransProfileFactory {
     // TODO: create configuration possibility
     // For now, just do : min, max, sum, count, avg, std dev. (7)
     //
-    int[] numericCalculations =
-      new int[] {
-        GroupByMeta.TYPE_GROUP_MIN, GroupByMeta.TYPE_GROUP_MAX, GroupByMeta.TYPE_GROUP_SUM,
-        GroupByMeta.TYPE_GROUP_COUNT_ALL, GroupByMeta.TYPE_GROUP_AVERAGE,
-        GroupByMeta.TYPE_GROUP_STANDARD_DEVIATION, };
+    String[] numericCalculations =
+      new String[] {
+        GroupByType.MIN, GroupByType.MAX, GroupByType.SUM,
+        GroupByType.COUNT_ALL, GroupByType.AVERAGE,
+        GroupByType.STANDARD_DEVIATION,
+        GroupByType.STANDARD_DEVIATION_SAMPLE
+      };
 
-    int[] stringCalculations =
-      new int[] { GroupByMeta.TYPE_GROUP_MIN, GroupByMeta.TYPE_GROUP_MAX, GroupByMeta.TYPE_GROUP_COUNT_ALL, };
+    String[] stringCalculations =
+      new String[] { GroupByType.MIN, GroupByType.MAX, GroupByType.COUNT_ALL, };
 
-    int[] dateCalculations =
-      new int[] { GroupByMeta.TYPE_GROUP_MIN, GroupByMeta.TYPE_GROUP_MAX, GroupByMeta.TYPE_GROUP_COUNT_ALL, };
+    String[] dateCalculations =
+      new String[] { GroupByType.MIN, GroupByType.MAX, GroupByType.COUNT_ALL, };
 
-    int[] booleanCalculations =
-      new int[] { GroupByMeta.TYPE_GROUP_MIN, GroupByMeta.TYPE_GROUP_MAX, GroupByMeta.TYPE_GROUP_COUNT_ALL, };
+    String[] booleanCalculations =
+      new String[] { GroupByType.MIN, GroupByType.MAX, GroupByType.COUNT_ALL, };
 
     // Run it through the "group by" step without a grouping.
     // Later, we can use the UnivariateStats plugin/step perhaps.
@@ -147,7 +150,7 @@ public class TransProfileFactory {
         //CHECKSTYLE:Indentation:OFF
         //CHECKSTYLE:LineLength:OFF
         for ( int c = 0; c < numericCalculations.length; c++ ) {
-          statsMeta.getAggregateField()[calcIndex] = valueMeta.getName() + "(" + GroupByMeta.getTypeDesc( numericCalculations[c] ) + ")";
+          statsMeta.getAggregateField()[calcIndex] = valueMeta.getName() + "(" + numericCalculations[c] + ")";
           statsMeta.getSubjectField()[calcIndex] = valueMeta.getName();
           statsMeta.getAggregateType()[calcIndex] = numericCalculations[c];
           calcIndex++;
@@ -160,7 +163,7 @@ public class TransProfileFactory {
         //CHECKSTYLE:Indentation:OFF
         //CHECKSTYLE:LineLength:OFF
         for ( int c = 0; c < stringCalculations.length; c++ ) {
-          statsMeta.getAggregateField()[calcIndex] = valueMeta.getName() + "(" + GroupByMeta.getTypeDesc( stringCalculations[c] ) + ")";
+          statsMeta.getAggregateField()[calcIndex] = valueMeta.getName() + "(" + stringCalculations[c] + ")";
           statsMeta.getSubjectField()[calcIndex] = valueMeta.getName();
           statsMeta.getAggregateType()[calcIndex] = stringCalculations[c];
           calcIndex++;
@@ -172,7 +175,7 @@ public class TransProfileFactory {
       if ( valueMeta.isDate() ) {
         for ( int c = 0; c < dateCalculations.length; c++ ) {
           statsMeta.getAggregateField()[calcIndex] =
-            valueMeta.getName() + "(" + GroupByMeta.getTypeDesc( dateCalculations[c] ) + ")";
+            valueMeta.getName() + "(" + dateCalculations[c] + ")";
           statsMeta.getSubjectField()[calcIndex] = valueMeta.getName();
           statsMeta.getAggregateType()[calcIndex] = dateCalculations[c];
           calcIndex++;
@@ -184,7 +187,7 @@ public class TransProfileFactory {
       if ( valueMeta.isBoolean() ) {
         for ( int c = 0; c < booleanCalculations.length; c++ ) {
           statsMeta.getAggregateField()[calcIndex] =
-            valueMeta.getName() + "(" + GroupByMeta.getTypeDesc( booleanCalculations[c] ) + ")";
+            valueMeta.getName() + "(" + booleanCalculations[c] + ")";
           statsMeta.getSubjectField()[calcIndex] = valueMeta.getName();
           statsMeta.getAggregateType()[calcIndex] = booleanCalculations[c];
           calcIndex++;

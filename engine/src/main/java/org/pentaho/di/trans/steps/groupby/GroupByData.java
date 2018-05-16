@@ -79,8 +79,6 @@ public class GroupByData extends BaseGroupByData implements StepDataInterface {
 
   public double[] mean;
 
-  public boolean newBatch;
-
   public GroupByData() {
     super();
 
