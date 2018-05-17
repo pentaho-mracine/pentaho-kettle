@@ -47,8 +47,6 @@ public enum GroupByType {
   STANDARD_DEVIATION_SAMPLE( 19, "STD_DEV_SAMPLE" ),
   PERCENTILE_NEAREST_RANK( 20, "PERCENTILE_NEAREST_RANK" );
 
-  Class<?> PKG = GroupByType.class;
-
   private final int type;
   private final String typeGroupCode; // short string identifier of function type (used in KTR file)
 
