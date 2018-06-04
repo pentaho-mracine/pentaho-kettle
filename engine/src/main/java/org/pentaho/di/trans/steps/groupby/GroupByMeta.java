@@ -24,6 +24,8 @@ package org.pentaho.di.trans.steps.groupby;
 
 import java.util.List;
 
+import org.pentaho.di.core.injection.Injection;
+import org.pentaho.di.core.injection.InjectionSupported;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -49,42 +51,50 @@ import org.w3c.dom.Node;
 /**
  * Created on 02-jun-2003
  */
+@InjectionSupported( localizationPrefix = "GroupByMeta.Injection" )
 public class GroupByMeta extends BaseGroupByMeta {
   private static Class<?> PKG = GroupByMeta.class; // for i18n purposes, needed by Translator2!!
 
   /**
    * All rows need to pass, adding an extra row at the end of each group/block.
    */
+  @Injection( name = "PASS_ALL_ROWS" )
   private boolean passAllRows;
 
   /**
    * Directory to store the temp files
    */
+  @Injection( name = "TEMP_DIRECTORY" )
   private String directory;
 
   /**
    * Temp files prefix...
    */
+  @Injection( name = "TEMP_FILE_PREFIX" )
   private String prefix;
 
   /**
-   * Indicate that some rows don't need to be considered : TODO: make work in GUI & worker
+   * Indicate that some rows don't need to be considered
+   * TODO: make work in GUI & worker & add injection support
    */
   private boolean aggregateIgnored;
 
   /**
-   * name of the boolean field that indicates we need to ignore the row : TODO: make work in GUI & worker
+   * name of the boolean field that indicates we need to ignore the row
+   * TODO: make work in GUI & worker & add injection support
    */
   private String aggregateIgnoredField;
 
   /**
    * Add a linenr in the group, resetting to 0 in a new group.
    */
+  @Injection( name = "GROUP_LINE_NUMBER_ENABLED" )
   private boolean addingLineNrInGroup;
 
   /**
    * The fieldname that will contain the added integer field
    */
+  @Injection( name = "GROUP_LINE_NUMBER_FIELDNAME" )
   private String lineNrInGroupField;
 
   public GroupByMeta() {
@@ -183,8 +193,6 @@ public class GroupByMeta extends BaseGroupByMeta {
 
   @Override
   public String getXML() {
-    super.getXML();
-
     StringBuilder retval = new StringBuilder( 500 );
 
     retval.append( "      " ).append( XMLHandler.addTagValue( "all_rows", passAllRows ) );
@@ -194,6 +202,8 @@ public class GroupByMeta extends BaseGroupByMeta {
     retval.append( "      " ).append( XMLHandler.addTagValue( "prefix", prefix ) );
     retval.append( "      " ).append( XMLHandler.addTagValue( "add_linenr", addingLineNrInGroup ) );
     retval.append( "      " ).append( XMLHandler.addTagValue( "linenr_fieldname", lineNrInGroupField ) );
+
+    return super.getXML();
   }
 
   @Override
