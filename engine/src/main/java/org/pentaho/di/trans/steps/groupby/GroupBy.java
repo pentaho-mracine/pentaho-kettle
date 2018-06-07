@@ -711,7 +711,11 @@ public class GroupBy extends BaseGroupBy {
           break;
         case MEDIAN:
         case PERCENTILE:
-          double percentile = Double.parseDouble( meta.getValueField()[ i ] );
+          double percentile = 50.0;
+          if ( GroupByType.getTypeFromString( meta.getAggregateType()[ i ] ) ==
+              GroupByType.PERCENTILE ) {
+            Double.parseDouble( meta.getValueField()[ i ] );
+          }
           @SuppressWarnings( "unchecked" )
           List<Double> valuesList = (List<Double>) data.agg[ i ];
           double[] values = new double[ valuesList.size() ];
@@ -721,7 +725,11 @@ public class GroupBy extends BaseGroupBy {
           ag = new Percentile().evaluate( values, percentile );
           break;
         case PERCENTILE_NEAREST_RANK:
-          double percentileValue = percentileValue = Double.parseDouble( meta.getValueField()[ i ] );
+          double percentileValue = 50.0;
+          if ( GroupByType.getTypeFromString( meta.getAggregateType()[ i ] ) ==
+              GroupByType.PERCENTILE_NEAREST_RANK ) {
+            percentileValue = Double.parseDouble( meta.getValueField()[ i ] );
+          }
           @SuppressWarnings( "unchecked" )
           List<Double> latenciesList = (List<Double>) data.agg[ i ];
           Collections.sort( latenciesList );

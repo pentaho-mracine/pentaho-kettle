@@ -98,20 +98,23 @@ public class TransProfileFactory {
     //
     String[] numericCalculations =
       new String[] {
-        GroupByType.MIN, GroupByType.MAX, GroupByType.SUM,
-        GroupByType.COUNT_ALL, GroupByType.AVERAGE,
-        GroupByType.STANDARD_DEVIATION,
-        GroupByType.STANDARD_DEVIATION_SAMPLE
+        GroupByType.MIN.getTypeGroupCode(), GroupByType.MAX.getTypeGroupCode(),
+        GroupByType.SUM.getTypeGroupCode(), GroupByType.COUNT_ALL.getTypeGroupCode(),
+        GroupByType.AVERAGE.getTypeGroupCode(), GroupByType.STANDARD_DEVIATION.getTypeGroupCode(),
+        GroupByType.STANDARD_DEVIATION_SAMPLE.getTypeGroupCode()
       };
 
     String[] stringCalculations =
-      new String[] { GroupByType.MIN, GroupByType.MAX, GroupByType.COUNT_ALL, };
+      new String[] { GroupByType.MIN.getTypeGroupCode(), GroupByType.MAX.getTypeGroupCode(),
+          GroupByType.COUNT_ALL.getTypeGroupCode(), };
 
     String[] dateCalculations =
-      new String[] { GroupByType.MIN, GroupByType.MAX, GroupByType.COUNT_ALL, };
+      new String[] { GroupByType.MIN.getTypeGroupCode(), GroupByType.MAX.getTypeGroupCode(),
+          GroupByType.COUNT_ALL.getTypeGroupCode(), };
 
     String[] booleanCalculations =
-      new String[] { GroupByType.MIN, GroupByType.MAX, GroupByType.COUNT_ALL, };
+      new String[] { GroupByType.MIN.getTypeGroupCode(), GroupByType.MAX.getTypeGroupCode(),
+          GroupByType.COUNT_ALL.getTypeGroupCode(), };
 
     // Run it through the "group by" step without a grouping.
     // Later, we can use the UnivariateStats plugin/step perhaps.

@@ -116,7 +116,7 @@ public class GroupByTest  {
     final String[] aggFields = { "b_g" };
     doReturn( aggFields ).when( groupByMeta ).getAggregateField();
 
-    final int[] aggType = { GroupByMeta.TYPE_GROUP_CONCAT_COMMA };
+    final String[] aggType = { GroupByType.CONCAT_COMMA.getTypeGroupCode() };
     doReturn( aggType ).when( groupByMeta ).getAggregateType();
 
     when( mockHelper.transMeta.getPrevStepFields( mockHelper.stepMeta ) ).thenReturn( new RowMeta() );
@@ -141,37 +141,37 @@ public class GroupByTest  {
     meta.setSubjectField( new String[]{
       "raw_integer", "raw_integer", "raw_integer", "raw_integer",
       "raw_integer", "raw_integer", "raw_string", "raw_string" } );
-    meta.setAggregateType( new int[] {
-      GroupByMeta.TYPE_GROUP_PERCENTILE,
-      GroupByMeta.TYPE_GROUP_STANDARD_DEVIATION,
-      GroupByMeta.TYPE_GROUP_MEDIAN,
-      GroupByMeta.TYPE_GROUP_COUNT_DISTINCT,
-      GroupByMeta.TYPE_GROUP_COUNT_ANY,
-      GroupByMeta.TYPE_GROUP_COUNT_ALL,
-      GroupByMeta.TYPE_GROUP_CONCAT_COMMA,
-      GroupByMeta.TYPE_GROUP_CONCAT_STRING } );
+    meta.setAggregateType( new String[] {
+      GroupByType.PERCENTILE.getTypeGroupCode(),
+      GroupByType.STANDARD_DEVIATION.getTypeGroupCode(),
+      GroupByType.MEDIAN.getTypeGroupCode(),
+      GroupByType.COUNT_DISTINCT.getTypeGroupCode(),
+      GroupByType.COUNT_ANY.getTypeGroupCode(),
+      GroupByType.COUNT_ALL.getTypeGroupCode(),
+      GroupByType.CONCAT_COMMA.getTypeGroupCode(),
+      GroupByType.CONCAT_STRING.getTypeGroupCode() } );
 
     meta.getFields( outputFields, "Group By Step", (RowMetaInterface[]) null, (StepMeta) null,
       (Variables) null, (Repository) null, (IMetaStore) null );
 
     assertEquals( outputFields.getValueMetaList().size(), 9 );
-    assertTrue( outputFields.getValueMeta( 0 ).getType() == ValueMetaInterface.TYPE_STRING );
+    assertEquals( ValueMetaInterface.TYPE_STRING, outputFields.getValueMeta( 0 ).getType() );
     assertTrue( outputFields.getValueMeta( 0 ).getName().equals( "group_by_field" ) );
-    assertTrue( outputFields.getValueMeta( 1 ).getType() == ValueMetaInterface.TYPE_NUMBER );
+    assertEquals( ValueMetaInterface.TYPE_NUMBER, outputFields.getValueMeta( 1 ).getType() );
     assertTrue( outputFields.getValueMeta( 1 ).getName().equals( "perc_field" ) );
-    assertTrue( outputFields.getValueMeta( 2 ).getType() == ValueMetaInterface.TYPE_NUMBER );
+    assertEquals( ValueMetaInterface.TYPE_NUMBER, outputFields.getValueMeta( 2 ).getType() );
     assertTrue( outputFields.getValueMeta( 2 ).getName().equals( "stddev_field" ) );
-    assertTrue( outputFields.getValueMeta( 3 ).getType() == ValueMetaInterface.TYPE_NUMBER );
+    assertEquals( ValueMetaInterface.TYPE_NUMBER, outputFields.getValueMeta( 3 ).getType() );
     assertTrue( outputFields.getValueMeta( 3 ).getName().equals( "median_field" ) );
-    assertTrue( outputFields.getValueMeta( 4 ).getType() == ValueMetaInterface.TYPE_INTEGER );
+    assertEquals( ValueMetaInterface.TYPE_INTEGER, outputFields.getValueMeta( 4 ).getType() );
     assertTrue( outputFields.getValueMeta( 4 ).getName().equals( "count_distinct_field" ) );
-    assertTrue( outputFields.getValueMeta( 5 ).getType() == ValueMetaInterface.TYPE_INTEGER );
+    assertEquals( ValueMetaInterface.TYPE_INTEGER, outputFields.getValueMeta( 5 ).getType() );
     assertTrue( outputFields.getValueMeta( 5 ).getName().equals( "count_any_field" ) );
-    assertTrue( outputFields.getValueMeta( 6 ).getType() == ValueMetaInterface.TYPE_INTEGER );
+    assertEquals( ValueMetaInterface.TYPE_INTEGER, outputFields.getValueMeta( 6 ).getType() );
     assertTrue( outputFields.getValueMeta( 6 ).getName().equals( "count_all_field" ) );
-    assertTrue( outputFields.getValueMeta( 7 ).getType() == ValueMetaInterface.TYPE_STRING );
+    assertEquals( ValueMetaInterface.TYPE_STRING, outputFields.getValueMeta( 7 ).getType() );
     assertTrue( outputFields.getValueMeta( 7 ).getName().equals( "concat_comma_field" ) );
-    assertTrue( outputFields.getValueMeta( 8 ).getType() == ValueMetaInterface.TYPE_STRING );
+    assertEquals( ValueMetaInterface.TYPE_STRING, outputFields.getValueMeta( 8 ).getType() );
     assertTrue( outputFields.getValueMeta( 8 ).getName().equals( "concat_custom_field" ) );
   }
 
