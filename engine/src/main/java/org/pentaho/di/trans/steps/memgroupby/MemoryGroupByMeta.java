@@ -25,6 +25,7 @@ package org.pentaho.di.trans.steps.memgroupby;
 import java.util.List;
 
 import org.pentaho.di.core.injection.AfterInjection;
+import org.pentaho.di.core.injection.Injection;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -54,46 +55,41 @@ import org.w3c.dom.Node;
 public class MemoryGroupByMeta extends BaseGroupByMeta {
   private static Class<?> PKG = MemoryGroupByMeta.class; // for i18n purposes, needed by Translator2!!
 
-  public static final int TYPE_GROUP_NONE = 0;
-  public static final int TYPE_GROUP_SUM = 1;
-  public static final int TYPE_GROUP_AVERAGE = 2;
-  public static final int TYPE_GROUP_MEDIAN = 3;
-  public static final int TYPE_GROUP_PERCENTILE = 4;
-  public static final int TYPE_GROUP_MIN = 5;
-  public static final int TYPE_GROUP_MAX = 6;
-  public static final int TYPE_GROUP_COUNT_ALL = 7;
-  public static final int TYPE_GROUP_CONCAT_COMMA = 8;
-  public static final int TYPE_GROUP_FIRST = 9;
-  public static final int TYPE_GROUP_LAST = 10;
-  public static final int TYPE_GROUP_FIRST_INCL_NULL = 11;
-  public static final int TYPE_GROUP_LAST_INCL_NULL = 12;
-  public static final int TYPE_GROUP_STANDARD_DEVIATION = 13;
-  public static final int TYPE_GROUP_CONCAT_STRING = 14;
-  public static final int TYPE_GROUP_COUNT_DISTINCT = 15;
-  public static final int TYPE_GROUP_COUNT_ANY = 16;
+  @Override
+  @Injection( name = "AGGREGATEFIELD" )
+  public void setAggregateField( String[] aggregateField ) {
+    this.aggregateField = aggregateField;
+  }
 
-  public static final String[] typeGroupCode = /* WARNING: DO NOT TRANSLATE THIS. WE ARE SERIOUS, DON'T TRANSLATE! */
-  {
-    "-", "SUM", "AVERAGE", "MEDIAN", "PERCENTILE", "MIN", "MAX", "COUNT_ALL", "CONCAT_COMMA", "FIRST", "LAST",
-    "FIRST_INCL_NULL", "LAST_INCL_NULL", "STD_DEV", "CONCAT_STRING", "COUNT_DISTINCT", "COUNT_ANY", };
+  @Override
+  @Injection( name = "AGGREGATETYPE" )
+  public void setAggregateType( String[] aggregateType ) {
+    this.aggregateType = aggregateType;
+  }
 
-  public static final String[] typeGroupLongDesc = {
-    "-", BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.SUM" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.AVERAGE" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.MEDIAN" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.PERCENTILE" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.MIN" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.MAX" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.CONCAT_ALL" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.CONCAT_COMMA" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.FIRST" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.LAST" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.FIRST_INCL_NULL" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.LAST_INCL_NULL" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.STANDARD_DEVIATION" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.CONCAT_STRING" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.COUNT_DISTINCT" ),
-    BaseMessages.getString( PKG, "MemoryGroupByMeta.TypeGroupLongDesc.COUNT_ANY" ), };
+  @Override
+  @Injection( name = "GROUPFIELD" )
+  public void setGroupField( String[] groupField ) {
+    this.groupField = groupField;
+  }
+
+  @Override
+  @Injection( name = "SUBJECTFIELD" )
+  public void setSubjectField( String[] subjectField ) {
+    this.subjectField = subjectField;
+  }
+
+  @Override
+  @Injection( name = "VALUEFIELD" )
+  public void setValueField( String[] valueField ) {
+    this.valueField = valueField;
+  }
+
+  @Override
+  @Injection( name = "ALWAYSGIVINGBACKONEROW" )
+  public void setAlwaysGivingBackOneRow( boolean alwaysGivingBackOneRow ) {
+    this.alwaysGivingBackOneRow = alwaysGivingBackOneRow;
+  }
 
   public MemoryGroupByMeta() {
     super(); // allocate BaseStepMeta
@@ -184,7 +180,7 @@ public class MemoryGroupByMeta extends BaseGroupByMeta {
     aggregateField = normalizedStringArrays[ 0 ];
     valueField = normalizedStringArrays[ 1 ];
 
-    int[][] normalizedIntArrays = Utils.normalizeArrays( nrFields, aggregateType );
-    aggregateType = normalizedIntArrays[ 0 ];
+    String[][] normalizedArrays = Utils.normalizeArrays( nrFields, aggregateType );
+    aggregateType = normalizedArrays[ 0 ];
   }
 }

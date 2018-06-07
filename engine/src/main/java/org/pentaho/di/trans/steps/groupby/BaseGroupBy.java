@@ -54,7 +54,7 @@ abstract public class BaseGroupBy extends BaseStep implements StepInterface {
     }
   }
 
-  protected abstract void handleLastOfGroup();
+  protected abstract void handleLastOfGroup() throws KettleException;
 
   @Override
   public void batchComplete() throws KettleException {

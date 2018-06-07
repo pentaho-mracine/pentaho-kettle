@@ -44,7 +44,6 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
-import org.pentaho.di.trans.step.StepMetaInjectionInterface;
 import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
@@ -96,6 +95,42 @@ public class GroupByMeta extends BaseGroupByMeta {
    */
   @Injection( name = "GROUP_LINE_NUMBER_FIELDNAME" )
   private String lineNrInGroupField;
+
+  @Override
+  @Injection( name = "AGG_FIELDNAME" )
+  public void setAggregateField( String[] aggregateField ) {
+    this.aggregateField = aggregateField;
+  }
+
+  @Override
+  @Injection( name = "AGG_TYPE" )
+  public void setAggregateType( String[] aggregateType ) {
+    this.aggregateType = aggregateType;
+  }
+
+  @Override
+  @Injection( name = "GROUP_FIELDNAME" )
+  public void setGroupField( String[] groupField ) {
+    this.groupField = groupField;
+  }
+
+  @Override
+  @Injection( name = "AGG_SUBJECT" )
+  public void setSubjectField( String[] subjectField ) {
+    this.subjectField = subjectField;
+  }
+
+  @Override
+  @Injection( name = "AGG_VALUE" )
+  public void setValueField( String[] valueField ) {
+    this.valueField = valueField;
+  }
+
+  @Override
+  @Injection( name = "ALLWAYS_PASS_A_ROW" )
+  public void setAlwaysGivingBackOneRow( boolean alwaysGivingBackOneRow ) {
+    this.alwaysGivingBackOneRow = alwaysGivingBackOneRow;
+  }
 
   public GroupByMeta() {
     super(); // allocate BaseStepMeta
@@ -309,11 +344,6 @@ public class GroupByMeta extends BaseGroupByMeta {
    */
   public void setLineNrInGroupField( String lineNrInGroupField ) {
     this.lineNrInGroupField = lineNrInGroupField;
-  }
-
-  @Override
-  public StepMetaInjectionInterface getStepMetaInjectionInterface() {
-    return new GroupByMetaInjection( this );
   }
 
   @Override

@@ -59,38 +59,32 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
   /**
    * Fields to group over
    */
-  @Injection( name = "GROUPFIELD", group = "FIELDS" )
   protected String[] groupField;
 
   /**
    * Name of aggregate field
    */
-  @Injection( name = "AGGREGATEFIELD", group = "AGGREGATES" )
   protected String[] aggregateField;
 
   /**
    * Field name to group over
    */
-  @Injection( name = "SUBJECTFIELD", group = "AGGREGATES" )
   protected String[] subjectField;
 
   /**
    * Type of aggregate
    */
-  @Injection( name="AGGREGATETYPE", group = "AGGREGATES" )
   // TODO: look into making this just GroupByTypes
   protected String[] aggregateType;
 
   /**
    * Value to use as separator for ex
    */
-  @Injection( name = "VALUEFIELD", group = "AGGREGATES" )
   protected String[] valueField;
 
   /**
    * Flag to indicate that we always give back one row. Defaults to true for existing transformations.
    */
-  @Injection( name = "ALWAYSGIVINGBACKONEROW", group = "FIELDS" )
   protected boolean alwaysGivingBackOneRow;
 
   public BaseGroupByMeta() {
@@ -106,10 +100,11 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
 
   /**
    * @param aggregateField The aggregateField to set.
+   *
+   * Abstract due to code refactoring of GroupBy and MemoryGroupBy
+   * steps with different metadata injection field names
    */
-  public void setAggregateField( String[] aggregateField ) {
-    this.aggregateField = aggregateField;
-  }
+  abstract public void setAggregateField( String[] aggregateField );
 
   /**
    * @return Returns the aggregateType.
@@ -120,10 +115,11 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
 
   /**
    * @param aggregateType The aggregateType to set.
+   *
+   * Abstract due to code refactoring of GroupBy and MemoryGroupBy
+   * steps with different metadata injection field names
    */
-  public void setAggregateType( int[] aggregateType ) {
-    this.aggregateType = aggregateType;
-  }
+  abstract public void setAggregateType( String[] aggregateType );
 
   /**
    * @return Returns the groupField.
@@ -134,10 +130,11 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
 
   /**
    * @param groupField The groupField to set.
+   *
+   * Abstract due to code refactoring of GroupBy and MemoryGroupBy
+   * steps with different metadata injection field names
    */
-  public void setGroupField( String[] groupField ) {
-    this.groupField = groupField;
-  }
+  abstract public void setGroupField( String[] groupField );
 
   /**
    * @return Returns the subjectField.
@@ -148,10 +145,11 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
 
   /**
    * @param subjectField The subjectField to set.
+   *
+   * Abstract due to code refactoring of GroupBy and MemoryGroupBy
+   * steps with different metadata injection field names
    */
-  public void setSubjectField( String[] subjectField ) {
-    this.subjectField = subjectField;
-  }
+  abstract public void setSubjectField( String[] subjectField );
 
   /**
    * @return Returns the valueField.
@@ -162,10 +160,26 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
 
   /**
    * @param valueField The valueField to set.
+   *
+   * Abstract due to code refactoring of GroupBy and MemoryGroupBy
+   * steps with different metadata injection field names
    */
-  public void setValueField( String[] valueField ) {
-    this.valueField = valueField;
+  abstract public void setValueField( String[] valueField );
+
+  /**
+   * @return the alwaysGivingBackOneRow
+   */
+  public boolean isAlwaysGivingBackOneRow() {
+    return alwaysGivingBackOneRow;
   }
+
+  /**
+   * @param alwaysGivingBackOneRow the alwaysGivingBackOneRow to set
+   *
+   * Abstract due to code refactoring of GroupBy and MemoryGroupBy
+   * steps with different metadata injection field names
+   */
+  abstract public void setAlwaysGivingBackOneRow( boolean alwaysGivingBackOneRow );
 
   @Override
   public void loadXML( Node stepnode, List<DatabaseMeta> databases, IMetaStore metaStore ) throws KettleXMLException {
@@ -278,8 +292,8 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
     if ( !passAllRows ) {
       // Add the grouping fields in the correct order...
       //
-      for ( int i = 0; i < groupField.length; i++ ) {
-        ValueMetaInterface valueMeta = rowMeta.searchValueMeta( groupField[ i ] );
+      for ( String s : groupField ) {
+        ValueMetaInterface valueMeta = rowMeta.searchValueMeta( s );
         if ( valueMeta != null ) {
           fields.addValueMeta( valueMeta );
         }
@@ -337,17 +351,17 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
 
         // Change type from integer to number in case off averages for cumulative average
         //
-        if ( aggregateType[ i ] == GroupByType.CUMULATIVE_AVERAGE.getTypeGroupCode()
+        if ( GroupByType.CUMULATIVE_AVERAGE.getTypeGroupCode().equalsIgnoreCase( aggregateType[ i ] )
             && valueType == ValueMetaInterface.TYPE_INTEGER ) {
           valueType = ValueMetaInterface.TYPE_NUMBER;
           precision = -1;
           length = -1;
-        } else if ( aggregateType[ i ] == GroupByType.COUNT_ALL.getTypeGroupCode()
-            || aggregateType[ i ] == GroupByType.COUNT_DISTINCT.getTypeGroupCode()
-            || aggregateType[ i ] == GroupByType.COUNT_ANY.getTypeGroupCode() ) {
+        } else if ( GroupByType.COUNT_ALL.getTypeGroupCode().equalsIgnoreCase( aggregateType[ i ] )
+            || GroupByType.COUNT_DISTINCT.getTypeGroupCode().equalsIgnoreCase( aggregateType[ i ] )
+            || GroupByType.COUNT_ANY.getTypeGroupCode().equalsIgnoreCase( aggregateType[ i ] ) ) {
           length = ValueMetaInterface.DEFAULT_INTEGER_LENGTH;
           precision = 0;
-        } else if ( aggregateType[ i ] == GroupByType.SUM.getTypeGroupCode()
+        } else if ( GroupByType.SUM.getTypeGroupCode().equalsIgnoreCase( aggregateType[ i ] )
             && valueType != ValueMetaInterface.TYPE_INTEGER && valueType != ValueMetaInterface.TYPE_NUMBER
             && valueType != ValueMetaInterface.TYPE_BIGNUMBER ) {
           // If it ain't numeric, we change it to Number
@@ -429,9 +443,9 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
         subjectField[ i ] = rep.getStepAttributeString( id_step, i, "aggregate_subject" );
         aggregateType[ i ] = rep.getStepAttributeString( id_step, i, "aggregate_type" );
 
-        if ( aggregateType[ i ] == GroupByType.COUNT_ALL.getTypeGroupCode()
-            || aggregateType[ i ] == GroupByType.COUNT_DISTINCT.getTypeGroupCode()
-            || aggregateType[ i ] == GroupByType.COUNT_ANY.getTypeGroupCode() ) {
+        if ( GroupByType.COUNT_ALL.getTypeGroupCode().equalsIgnoreCase( aggregateType[ i ] )
+            || GroupByType.COUNT_DISTINCT.getTypeGroupCode().equalsIgnoreCase( aggregateType[ i ] )
+            || GroupByType.COUNT_ANY.getTypeGroupCode().equalsIgnoreCase( aggregateType[ i ] ) ) {
           hasNumberOfValues = true;
         }
         valueField[ i ] = rep.getStepAttributeString( id_step, i, "aggregate_value_field" );
@@ -490,20 +504,6 @@ abstract public class BaseGroupByMeta extends BaseStepMeta implements StepMetaIn
                                          int cnr, TransMeta transMeta, Trans trans );
 
   abstract public StepDataInterface getStepData();
-
-  /**
-   * @return the alwaysGivingBackOneRow
-   */
-  public boolean isAlwaysGivingBackOneRow() {
-    return alwaysGivingBackOneRow;
-  }
-
-  /**
-   * @param alwaysGivingBackOneRow the alwaysGivingBackOneRow to set
-   */
-  public void setAlwaysGivingBackOneRow( boolean alwaysGivingBackOneRow ) {
-    this.alwaysGivingBackOneRow = alwaysGivingBackOneRow;
-  }
 
   @Override
   public TransMeta.TransformationType[] getSupportedTransformationTypes() {
