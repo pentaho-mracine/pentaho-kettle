@@ -22,8 +22,7 @@
 
 package org.pentaho.di.www;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
@@ -193,6 +192,7 @@ public class GetStatusServlet extends BaseHttpServlet implements CartePluginInte
     response.setStatus( HttpServletResponse.SC_OK );
 
     boolean useXML = "Y".equalsIgnoreCase( request.getParameter( "xml" ) );
+    boolean useCustomTheme = "Y".equalsIgnoreCase( request.getParameter( "useCustomTheme" ) );
 
     if ( useXML ) {
       response.setContentType( "text/xml" );
@@ -241,6 +241,28 @@ public class GetStatusServlet extends BaseHttpServlet implements CartePluginInte
       out.println( "<HEAD><TITLE>"
         + BaseMessages.getString( PKG, "GetStatusServlet.KettleSlaveServerStatus" ) + "</TITLE>" );
       out.println( "<META http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">" );
+
+      if ( useCustomTheme ) {
+        out.println( "<STYLE>" );
+        //String currentPath = new File( "." ).getAbsolutePath();
+        BufferedReader br = new BufferedReader( new FileReader( "..\\..\\pentaho-solutions\\system\\common-ui\\resources\\themes\\ruby\\globalRuby.css" ) );
+        StringBuilder sb = new StringBuilder();
+
+        try {
+          String line = br.readLine();
+          while( line != null ) {
+            sb.append( line );
+            line = br.readLine();
+          }
+        } catch ( Exception ex ) {
+          // log here
+        }
+
+        br.close();
+        out.println( sb.toString() );
+        out.println( "</STYLE>" );
+      }
+
       out.println( "</HEAD>" );
       out.println( "<BODY>" );
       out.println( "<H1>" + BaseMessages.getString( PKG, "GetStatusServlet.TopStatus" ) + "</H1>" );
