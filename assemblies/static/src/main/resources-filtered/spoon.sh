@@ -264,7 +264,7 @@ inputtoexitstatus() {
 }
 
 if [ -n "${FILTER_GTK_WARNINGS}" ] ; then
-    (((("$_PENTAHO_JAVA" $OPT -jar "$STARTUP" -lib $LIBPATH "${1+$@}"  2>&1; echo $? >&3 ) | grep -viE "Gtk-WARNING|GLib-GObject|GLib-CRITICAL|^$" >&4 ) 3>&1)| inputtoexitstatus ) 4>&1
+    (((("$_PENTAHO_JAVA" $OPT -DENV_PENTAHO_REPO_NAME="$repoName" -jar "$STARTUP" -lib $LIBPATH "${1+$@}"  2>&1; echo $? >&3 ) | grep -viE "Gtk-WARNING|GLib-GObject|GLib-CRITICAL|^$" >&4 ) 3>&1)| inputtoexitstatus ) 4>&1
 else
     "$_PENTAHO_JAVA" $OPT -jar "$STARTUP" -lib $LIBPATH "${1+$@}"
 fi
